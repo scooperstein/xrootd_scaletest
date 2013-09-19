@@ -1,0 +1,3 @@
+root://cmsxrootd.hep.wisc.edu//store/user/dan/test_file
+root://cmsxrootd.hep.wisc.edu//store/user/stephane/2013-07-17-8TeV-v1-ZH_light/data_DoubleElectron_Run2012D_22Jan2013_v1/run_slim_and_merge-make_ntuples_cfg-patTuple_cfg-FE5920D7-918F-E211-B790-00261894386E.root
+Stephane_bogus_file
