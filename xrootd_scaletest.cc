@@ -12,6 +12,8 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
+  dup2(1,2);
+
   std::ifstream input_files(argv[1]);
   double iteration_length = atof(argv[2]);
   printf("Attempting to open files in %s at rate of one file per %.6lf seconds\n", 
@@ -33,13 +35,16 @@ int main(int argc, char** argv) {
       //cli->Open( 0, 0);
       //if (!cli->IsOpen() ) {
       bool fopen_success = true;
+ 
       if ( !cli->Open(0, 0) ||
              (cli->LastServerResp()->status != kXR_ok ) ) {
         // client failed to open file properly
-        printf("failed to open file %s \n", line.c_str());
+        //printf("failed to open file %s \n", line.c_str());
         fopen_success = false;
       }
-      cli->Close();
+
+      //struct ServerResponseBody_Error *e = cli->LastServerError();
+      //cli->Close();
 
       // file closing timestamp
       gettimeofday(&tim2, NULL);
@@ -54,7 +59,9 @@ int main(int argc, char** argv) {
       } 
 
       printf("RESULT: %s %s %i %.6lf \n", line.c_str(),
-	fsuccess_message.c_str(), start_time, t2-t1);
+        fsuccess_message.c_str(), start_time, t2-t1);
+      /*printf("RESULT: %s %s %i %.6lf %i %s \n", line.c_str(),
+	fsuccess_message.c_str(), start_time, t2-t1, e->errnum, e->errmsg);*/
       
       double sleep_length = iteration_length - (t2-t1);
       if (sleep_length <= 0) { sleep_length = 0.0; }
@@ -65,6 +72,7 @@ int main(int argc, char** argv) {
       twait.tv_sec = wait_seconds;
       
       //printf("sleep length this cycle: %.6lf \n", sleep_length);
+      cli->Close();
       select(0,NULL,NULL,NULL,&twait);
     }
   }
