@@ -52,15 +52,16 @@ for i in range(nbins):
                     job_success = False
                 start_time = int(results[3])
                 run_time = float(results[4])
-                #print i
+
+                if (job_success):
+                    hist_job_successes.Fill(start_time)
+                else: 
+                    hist_job_failures.Fill(start_time)
+                
                 if (start_time > intervals[str(i)][0] and start_time < intervals[str(i)][1] ):
                     # a bit of a hack, but this should allow me to fill each time interval at most once per job
                     hist_active_jobs.Fill(start_time)
-           
-                    if (job_success):
-                        hist_job_successes.Fill(start_time)
-                    else: 
-                        hist_job_failures.Fill(start_time)
+          
                     break;
         file.close()
     test_files.close()
@@ -75,7 +76,7 @@ for i in range(nbins):
     s = hist_job_successes.GetBinContent(i+1)
     f = hist_job_failures.GetBinContent(i+1)
     if (f > 0):
-        rate = s/f
+        rate = s/(s+f)
     elif (s == 0.0):
         rate = 0.0
     else: rate = 1.0 #all success, no failures
