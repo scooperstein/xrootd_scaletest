@@ -70,7 +70,8 @@ for i in range(nbins):
 n_clients = ROOT.TVectorF()
 sf_rate = ROOT.TVectorF()
 
-graph = ROOT.TGraph()
+graph1 = ROOT.TGraph()
+graph2 = ROOT.TGraph()
 for i in range(nbins):
     n_clients = hist_active_jobs.GetBinContent(i+1)
     s = hist_job_successes.GetBinContent(i+1)
@@ -80,7 +81,8 @@ for i in range(nbins):
     elif (s == 0.0):
         rate = 0.0
     else: rate = 1.0 #all success, no failures
-    graph.SetPoint(graph.GetN(), n_clients, rate)
+    graph1.SetPoint(graph1.GetN(), n_clients, rate)
+    graph2.SetPoint(graph2.GetN(), overall_start_time+i*bin_size, rate)
 
 c1 = ROOT.TCanvas("c1", "c1")
 #graph.Draw()
@@ -95,7 +97,8 @@ os.system("sleep 3")
 hist_active_jobs.Write()
 hist_job_successes.Write()
 hist_job_failures.Write()
-graph.Write()
+graph1.Write()
+graph2.Write()
 #output_file.Write()
 c1.Close()
 output_file.Close()
