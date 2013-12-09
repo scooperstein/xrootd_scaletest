@@ -54,7 +54,8 @@ for i in range(nbins):
                 else: 
                     job_success = False
                 start_time = int(results[3]) - overall_start_time
-                
+               
+                # jobs were limited to run at 2 Hz 
                 run_time = float(results[4])
                 if (run_time < 0.5):
                     run_time = 0.5
@@ -68,7 +69,7 @@ for i in range(nbins):
                 #hist_opentimes.Fill(start_time, run_time)
                 
                 if (start_time > intervals[str(i)][0] and start_time < intervals[str(i)][1] ):
-                    # a bit of a hack, but this should allow me to fill each time interval at most once per job
+                    # fill each time interval at most once per job
                     hist_active_jobs.Fill(round(start_time))
           
                     break;

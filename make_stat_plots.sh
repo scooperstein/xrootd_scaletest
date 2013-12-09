@@ -7,9 +7,14 @@
 
 #ls $test_directory/stdout* > test_files.txt
 
-python make_stat_plots.py test_files_wisconsin.txt 8000 500 1380125156
-python make_stat_plots.py test_files_wisconsin_internal.txt 4000 300 1380139669
-python make_stat_plots.py test_files_nebraska.txt 3600 300 1380129980
+#python make_stat_plots.py test_files_wisconsin.txt 8000 500 1380125156
+#python make_stat_plots.py test_files_wisconsin_internal.txt 4000 300 1380139669
+#python make_stat_plots.py test_files_nebraska.txt 3600 300 1380129980
 
-python make_stat_plots.py test_files_nebraska_global.txt 4000 400 1383947801 
-python make_stat_plots.py test_files_nebraska_internal.txt 3600 300 1383942846 
+#python make_stat_plots.py test_files_nebraska_global.txt 4000 400 1383947801 
+#python make_stat_plots.py test_files_nebraska_internal.txt 3600 300 1383942846 
+
+#python make_stat_plots.py test_files_nov29.txt 7200 400 1385791943
+#python make_stat_plots.py test_files_nov30.txt 7200 400 1385860556 
+
+python make_stat_plots.py test_files_dec4.txt 14400 1000 1386196063
