@@ -29,6 +29,7 @@ hist_active_jobs = ROOT.TH1F("hist_active_jobs", "concurrent active jobs as a fu
 hist_job_failures = ROOT.TH1F("hist_job_failures", "concurrent job failures as a function of time", nbins, 0, test_length)
 hist_job_successes = ROOT.TH1F("hist_job_successes", "concurrent job successes as a function of time", nbins, 0, test_length)
 hist_opentimes = ROOT.TH1F("hist_opentimes", "concurrent job successes as a function of time", nbins, 0, test_length)
+hist_opentimes.Sumw2()
 #hist_active_jobs.SetMaximum(1)
 
 # this extra for loop destroys computation time and seems stupid,
@@ -87,7 +88,7 @@ graph1 = ROOT.TGraph() # number of concurrent clients vs. success rate
 graph2 = ROOT.TGraph() # time vs. failure rate
 #graph3 = ROOT.TGraph()
 graph3_b = ROOT.TGraph()
-graph3 = ROOT.TGraph() # number of concurrent clients vs. average runtime
+graph3 = ROOT.TGraphErrors() # number of concurrent clients vs. average runtime
 graph4 = ROOT.TGraph() # avg runtime vs. time 
 
 for i in range(nbins):
@@ -106,33 +107,37 @@ for i in range(nbins):
     graph2.SetPoint(graph2.GetN(), exp_rate, f_rate*100)
 
     run_times_combined = hist_opentimes.GetBinContent(i+1)
+    run_times_error = hist_opentimes.GetBinError(i+1)
+    print 'runtime, err, successes ', run_times_combined, run_times_error, s
     if (s == 0): break
     performance_measure = n_clients / ( run_times_combined/(s) ) 
+    performance_error = (run_times_error /  run_times_combined) * performance_measure
     graph3_b.SetPoint(graph3.GetN(), n_clients, run_times_combined/(s))
     graph3.SetPoint(graph3.GetN(), exp_rate, performance_measure)
-    #graph3.SetPointError(graph3.GetN()-1, 0.0, (1/(math.sqrt(n_clients))) * performance_measure )
+    graph3.SetPointError(graph3.GetN(), 0.0, performance_error )
     print run_times_combined/(s)
     graph4.SetPoint(graph4.GetN(), i*bin_size, performance_measure )
 
 c1 = ROOT.TCanvas("c1", "c1")
 #graph.Draw()
-ofname = sys.argv[1][11:-4] + ".root"
+outfilebase = sys.argv[1][:-4]
+ofname = outfilebase + ".root"
 print "ofname: %s" % ofname
 output_file = ROOT.TFile(ofname, "RECREATE")
 #hist_active_jobs.Draw()
 graph2.SetMarkerStyle(8) # big dot
 graph3.SetMarkerStyle(8) # big dot
-graph3.Draw("AP")
-graph3.GetXaxis().SetTitle("Expected rate (Hz)")
+graph3.Draw("AP0")
+graph3.GetXaxis().SetTitle("Expected file-open rate (Hz)")
 # graph3.GetXaxis().SetTitle("# of Active clients")
-graph3.GetYaxis().SetTitle("Performance (Hz)")
+graph3.GetYaxis().SetTitle("Observed file-open rate (Hz)")
 #os.system("sleep 5")
-c1.SaveAs("plots/" + sys.argv[1][11:-4] + "_exprate_vs_performance.png")
+c1.SaveAs("plots/" + outfilebase + "_exprate_vs_performance.png")
 graph2.Draw("AP")
 graph2.GetXaxis().SetTitle("Expected rate (Hz)")
 # graph2.GetXaxis().SetTitle("# of Active Clients")
 graph2.GetYaxis().SetTitle("Fractional failure rate (%)")
-c1.SaveAs("plots/" + sys.argv[1][11:-4] + "_frate_vs_exprate.png")
+c1.SaveAs("plots/" + outfilebase + "_frate_vs_exprate.png")
 #os.system("sleep 3")
 #hist_job_successes.Draw()
 #os.system("sleep 3")
