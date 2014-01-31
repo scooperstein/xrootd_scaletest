@@ -7,6 +7,8 @@ if (len(sys.argv) != 5):
     print "Usage: python make_stat_plots.py test_files test_duration size_of_time_bins test_start_time"
     sys.exit(1)
 
+target_rate = 2
+
 print "Opening list of test files..." + sys.argv[1]
 #test_files = open(sys.argv[1])
 test_length = float(sys.argv[2])
@@ -27,16 +29,18 @@ hist_active_jobs = ROOT.TH1F("hist_active_jobs", "concurrent active jobs as a fu
 hist_job_failures = ROOT.TH1F("hist_job_failures", "concurrent job failures as a function of time", nbins, 0, test_length)
 hist_job_successes = ROOT.TH1F("hist_job_successes", "concurrent job successes as a function of time", nbins, 0, test_length)
 hist_opentimes = ROOT.TH1F("hist_opentimes", "concurrent job successes as a function of time", nbins, 0, test_length)
+hist_opentimes.Sumw2()
 #hist_active_jobs.SetMaximum(1)
 
 # this extra for loop destroys computation time and seems stupid,
 # but I have yet to come up with a better way to only fill the histogram
 # once per job per time interval
 for i in range(nbins):
+    print 'processing bin ', i
     test_files = open(sys.argv[1])
     for filename in test_files:
         filename = filename.rstrip('\n')
-        #print "opening file %s ..." % filename
+        # print "opening file %s ..." % filename
         file = open(filename)
         ## I want this h to be temporary and have maximum bin value of one so that we count 
         ## the number of jobs actually running during the time period rather than simply the 
@@ -84,7 +88,7 @@ graph1 = ROOT.TGraph() # number of concurrent clients vs. success rate
 graph2 = ROOT.TGraph() # time vs. failure rate
 #graph3 = ROOT.TGraph()
 graph3_b = ROOT.TGraph()
-graph3 = ROOT.TGraph() # number of concurrent clients vs. average runtime
+graph3 = ROOT.TGraphErrors() # number of concurrent clients vs. average runtime
 graph4 = ROOT.TGraph() # avg runtime vs. time 
 
 for i in range(nbins):
@@ -98,33 +102,48 @@ for i in range(nbins):
         continue
     else: rate = 1.0 #all success, no failures
     f_rate = 1 - rate
+    exp_rate = n_clients * target_rate
     graph1.SetPoint(graph1.GetN(), n_clients, f_rate)
-    graph2.SetPoint(graph2.GetN(), n_clients, f_rate*100)
+    graph2.SetPoint(graph2.GetN(), exp_rate, f_rate*100)
 
     run_times_combined = hist_opentimes.GetBinContent(i+1)
+    run_times_error = hist_opentimes.GetBinError(i+1)
+    print 'runtime, err, successes ', run_times_combined, run_times_error, s
     if (s == 0): break
     performance_measure = n_clients / ( run_times_combined/(s) ) 
+    performance_error = (run_times_error /  run_times_combined) * performance_measure
     graph3_b.SetPoint(graph3.GetN(), n_clients, run_times_combined/(s))
-    graph3.SetPoint(graph3.GetN(), n_clients, performance_measure)
-    #graph3.SetPointError(graph3.GetN()-1, 0.0, (1/(math.sqrt(n_clients))) * performance_measure )
+    graph3.SetPoint(graph3.GetN(), exp_rate, performance_measure)
+    graph3.SetPointError(graph3.GetN(), 0.0, performance_error )
     print run_times_combined/(s)
     graph4.SetPoint(graph4.GetN(), i*bin_size, performance_measure )
 
 c1 = ROOT.TCanvas("c1", "c1")
 #graph.Draw()
-ofname = sys.argv[1][11:-4] + ".root"
+outfilebase = sys.argv[1][:-4]
+ofname = outfilebase + ".root"
 print "ofname: %s" % ofname
 output_file = ROOT.TFile(ofname, "RECREATE")
 #hist_active_jobs.Draw()
-graph3.Draw("AP")
-graph3.GetXaxis().SetTitle("# of Active Clients")
-graph3.GetYaxis().SetTitle("Performance (Hz)")
+graph2.SetMarkerStyle(8) # big dot
+graph3.SetMarkerStyle(8) # big dot
+graph3.Draw("AP0")
+graphmax = graph3.GetHistogram().GetMaximum()
+evenline = ROOT.TLine(0.0, 0.0, graphmax, graphmax) 
+evenline.SetLineColor(8)
+evenline.SetLineWidth(2)
+evenline.SetLineStyle(1)
+evenline.Draw("same")
+graph3.GetXaxis().SetTitle("Expected file-open rate (Hz)")
+# graph3.GetXaxis().SetTitle("# of Active clients")
+graph3.GetYaxis().SetTitle("Observed file-open rate (Hz)")
 #os.system("sleep 5")
-c1.SaveAs("plots/" + sys.argv[1][11:-4] + "_nClients_vs_performance.png")
+c1.SaveAs("plots/" + outfilebase + "_exprate_vs_performance.png")
 graph2.Draw("AP")
-graph2.GetXaxis().SetTitle("# of Active Clients")
-graph2.GetYaxis().SetTitle("fractional failure rate (%)")
-c1.SaveAs("plots/" + sys.argv[1][11:-4] + "_frate_vs_time.png")
+graph2.GetXaxis().SetTitle("Expected rate (Hz)")
+# graph2.GetXaxis().SetTitle("# of Active Clients")
+graph2.GetYaxis().SetTitle("Fractional failure rate (%)")
+c1.SaveAs("plots/" + outfilebase + "_frate_vs_exprate.png")
 #os.system("sleep 3")
 #hist_job_successes.Draw()
 #os.system("sleep 3")
@@ -135,8 +154,8 @@ hist_active_jobs.Write()
 hist_job_successes.Write()
 hist_job_failures.Write()
 graph1.Write("nClients_vs_rate")
-graph2.Write("rate_vs_time")
-graph3.Write("nClients_vs_performance")
+graph2.Write("rate_vs_exprate")
+graph3.Write("exprate_vs_performance")
 graph3_b.Write("nClients_vs_avgruntime")
 graph4.Write("performance_vs_time")
 #output_file.Write()
