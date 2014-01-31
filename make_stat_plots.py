@@ -3,8 +3,8 @@ import ROOT
 import os
 import math
 
-if (len(sys.argv) != 5):
-    print "Usage: python make_stat_plots.py test_files test_duration size_of_time_bins test_start_time"
+if (len(sys.argv) != 6):
+    print "Usage: python make_stat_plots.py test_files test_duration size_of_time_bins test_start_time site_name"
     sys.exit(1)
 
 target_rate = 2
@@ -127,16 +127,34 @@ output_file = ROOT.TFile(ofname, "RECREATE")
 #hist_active_jobs.Draw()
 graph2.SetMarkerStyle(8) # big dot
 graph3.SetMarkerStyle(8) # big dot
-graph3.Draw("AP0")
+graph3.SetTitle(sys.argv[5])
 graph3.GetXaxis().SetTitle("Expected file-open rate (Hz)")
 # graph3.GetXaxis().SetTitle("# of Active clients")
 graph3.GetYaxis().SetTitle("Observed file-open rate (Hz)")
+graph3.GetYaxis().SetRangeUser(0, 250)
+graph3.GetXaxis().SetRangeUser(0, 250)
+graph3.Draw("AP")
+xmax = graph3.GetXaxis().GetXmax()
+graphmax = graph3.GetHistogram().GetMaximum()
+print 'graph max ', graphmax, xmax
+if graphmax > 250:
+	graphmax = 250
+if graphmax > xmax:
+	graphmax = xmax
+evenline = ROOT.TLine(0.0, 0.0, graphmax, graphmax) 
+evenline.SetLineColor(8)
+evenline.SetLineWidth(2)
+evenline.SetLineStyle(1)
+evenline.Draw("same")
 #os.system("sleep 5")
 c1.SaveAs("plots/" + outfilebase + "_exprate_vs_performance.png")
-graph2.Draw("AP")
+graph2.SetTitle(sys.argv[5])
 graph2.GetXaxis().SetTitle("Expected rate (Hz)")
 # graph2.GetXaxis().SetTitle("# of Active Clients")
 graph2.GetYaxis().SetTitle("Fractional failure rate (%)")
+graph2.GetYaxis().SetRangeUser(0, 6)
+graph2.GetXaxis().SetRangeUser(0, 250)
+graph2.Draw("AP")
 c1.SaveAs("plots/" + outfilebase + "_frate_vs_exprate.png")
 #os.system("sleep 3")
 #hist_job_successes.Draw()
@@ -155,4 +173,3 @@ graph4.Write("performance_vs_time")
 #output_file.Write()
 c1.Close()
 output_file.Close()
-
